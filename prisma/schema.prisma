@@ -1,0 +1,64 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  passwordHash  String
+  name          String?
+  role          String   @default("PARTNER")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  partner       PartnerProfile?
+  services      Service[]
+  bookings      Booking[]
+}
+
+model PartnerProfile {
+  id           String @id @default(cuid())
+  userId       String @unique
+  user         User   @relation(fields: [userId], references: [id])
+  businessName String
+  city         String?
+  country      String?
+  about        String?
+  website      String?
+}
+
+model Service {
+  id          String   @id @default(cuid())
+  ownerId     String
+  owner       User     @relation(fields: [ownerId], references: [id])
+  title       String
+  description String
+  category    String
+  city        String?
+  price       Float
+  currency    String   @default("USD")
+  rating      Float?   @default(0)
+  imageUrl    String?
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  bookings    Booking[]
+}
+
+model Booking {
+  id          String   @id @default(cuid())
+  serviceId   String
+  service     Service  @relation(fields: [serviceId], references: [id])
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id])
+  name        String
+  email       String
+  date        DateTime
+  pax         Int       @default(1)
+  totalPrice  Float
+  createdAt   DateTime  @default(now())
+}
