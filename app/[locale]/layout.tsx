@@ -1,4 +1,4 @@
-import '@/src/styles/globals.css';
+import '../globals.css';
 import { NextIntlClientProvider } from 'next-intl';
 
 export async function generateStaticParams() {
