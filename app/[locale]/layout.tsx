@@ -1,21 +1,21 @@
-import '../globals.css';
-import { NextIntlClientProvider } from 'next-intl';
+import type { ReactNode } from 'react';
+import { i18n } from '../../i18n';      // <— i18n.ts ligger i projektroten
+import '../globals.css';                // <— global CSS vi lade i app/
 
 export async function generateStaticParams() {
   return i18n.locales.map((locale) => ({ locale }));
 }
 
-export default async function LocaleLayout({ children, params }: { children: React.ReactNode; params: { locale: string } }) {
-  const { locale } = params;
-  const messages = await import(`../../messages/${locale}.json`).then((m) => m);
-
+export default function LocaleLayout({
+  children,
+  params
+}: {
+  children: ReactNode;
+  params: { locale: string };
+}) {
   return (
-    <html lang={locale}>
-      <body>
-        <NextIntlClientProvider locale={locale} messages={messages}>
-          <div className="max-w-md mx-auto p-4">{children}</div>
-        </NextIntlClientProvider>
-      </body>
+    <html lang={params.locale}>
+      <body>{children}</body>
     </html>
   );
 }
