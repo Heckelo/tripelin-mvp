@@ -5,7 +5,7 @@ import bcrypt from "bcrypt";
 
 const prisma = new PrismaClient();
 
-export const authOptions = {
+export const authOptions: import("next-auth").NextAuthConfig = {
   providers: [
     CredentialsProvider({
       name: "Credentials",
@@ -28,7 +28,7 @@ export const authOptions = {
       }
     })
   ],
-  session: { strategy: "jwt" },
+  session: { strategy: "jwt" as const },
   secret: process.env.AUTH_SECRET
 };
 
