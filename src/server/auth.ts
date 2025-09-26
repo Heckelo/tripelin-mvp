@@ -1,37 +1,36 @@
 import type { NextAuthConfig } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { prisma } from "./db";
-import * as bcrypt from "bcryptjs";
+import bcrypt from "bcryptjs";
 
 export const authOptions: NextAuthConfig = {
   providers: [
     Credentials({
-      name: "Credentials",
       credentials: {
         email: { label: "Email", type: "text" },
         password: { label: "Password", type: "password" }
       },
-      async authorize(credentials) {
-        // Säker extraktion med sträng-guards
-        const email = typeof credentials?.email === "string" ? credentials.email : "";
-        const password = typeof credentials?.password === "string" ? credentials.password : "";
-
+      authorize: async (credentials) => {
+        const email = (credentials?.email ?? "").toString().trim();
+        const password = (credentials?.password ?? "").toString();
         if (!email || !password) return null;
 
         const user = await prisma.user.findUnique({ where: { email } });
-        if (!user || !user.password) return null;
+        if (!user) return null;
 
-        const ok = await bcrypt.compare(password, user.password);
+        // Jämför mot passwordHash enligt din Prisma-modell
+        const ok = await bcrypt.compare(password, user.passwordHash);
         if (!ok) return null;
 
         return {
-          id: String(user.id),
+          id: user.id,
+          name: user.name,
           email: user.email,
-          name: user.name ?? undefined
+          role: (user as any).role ?? "user"
         };
       }
     })
   ],
-  session: { strategy: "jwt" as const },
-  secret: process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET
+  session: { strategy: "jwt" },
+  secret: process.env.AUTH_SECRET
 };

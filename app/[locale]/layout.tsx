@@ -1,16 +1,15 @@
-import type { ReactNode } from 'react';
-import { i18n } from '../../i18n';      // <— i18n.ts ligger i projektroten
-import '../globals.css';                // <— global CSS vi lade i app/
+import "../globals.css";
+import { i18n } from "@/src/i18n";
 
 export async function generateStaticParams() {
   return i18n.locales.map((locale) => ({ locale }));
 }
 
-export default function LocaleLayout({
+export default async function LocaleLayout({
   children,
   params
 }: {
-  children: ReactNode;
+  children: React.ReactNode;
   params: { locale: string };
 }) {
   return (
