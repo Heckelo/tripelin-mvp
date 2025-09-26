@@ -1,35 +1,37 @@
-import NextAuth from "next-auth";
-import CredentialsProvider from "next-auth/providers/credentials";
-import { PrismaClient } from "@prisma/client";
-import bcrypt from "bcrypt";
+import type { NextAuthConfig } from "next-auth";
+import Credentials from "next-auth/providers/credentials";
+import { prisma } from "./db";
+import bcrypt from "bcryptjs";
 
-const prisma = new PrismaClient();
-
-export const authOptions: import("next-auth").NextAuthConfig = {
+export const authOptions: NextAuthConfig = {
   providers: [
-    CredentialsProvider({
+    Credentials({
       name: "Credentials",
       credentials: {
         email: { label: "Email", type: "text" },
         password: { label: "Password", type: "password" }
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) return null;
+        // Säker extraktion med sträng-guards
+        const email = typeof credentials?.email === "string" ? credentials.email : "";
+        const password = typeof credentials?.password === "string" ? credentials.password : "";
 
-        const user = await prisma.user.findUnique({
-          where: { email: credentials.email }
-        });
-        if (!user) return null;
+        if (!email || !password) return null;
 
-        const isValid = await bcrypt.compare(credentials.password, user.passwordHash);
-        if (!isValid) return null;
+        const user = await prisma.user.findUnique({ where: { email } });
+        if (!user || !user.password) return null;
 
-        return { id: user.id, email: user.email, name: user.name, role: user.role };
+        const ok = await bcrypt.compare(password, user.password);
+        if (!ok) return null;
+
+        return {
+          id: String(user.id),
+          email: user.email,
+          name: user.name ?? undefined
+        };
       }
     })
   ],
   session: { strategy: "jwt" as const },
-  secret: process.env.AUTH_SECRET
+  secret: process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET
 };
-
-export const { handlers, auth, signIn, signOut } = NextAuth(authOptions);
